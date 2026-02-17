@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네온 인터벌 타이머 Pro v8.3</title>
+    <style>
+        :root { --bg: #050505; --card: #121212; --neon-g: #00ff88; --neon-b: #00d9ff; --neon-r: #ff2a6d; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); text-align: center; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; margin: 0; padding: 15px; }
+        
+        .box { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #222; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .neon-border { border: 1px solid var(--neon-g); box-shadow: 0 0 10px rgba(0, 255, 136, 0.2); }
+
+        #status { font-size: 1rem; color: var(--neon-b); margin-bottom: 5px; font-weight: bold; }
+        #t { font-size: 6rem; font-weight: 900; color: var(--neon-g); margin: 5px 0; text-shadow: 0 0 20px rgba(0, 255, 136, 0.6); font-variant-numeric: tabular-nums; }
+        #round { font-size: 1.1rem; color: #888; }
+
+        .input-group { display: flex; justify-content: space-around; align-items: center; margin: 10px 0; padding: 12px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
+        .active-row { border-left: 4px solid var(--neon-g); background: #1e1e1e; }
+        .inactive-row { opacity: 0.3; filter: grayscale(1); }
+
+        input[type="number"] { width: 45px; background: #222; color: var(--neon-g); border: 1px solid #444; text-align: center; border-radius: 6px; padding: 5px; font-weight: bold; font-size: 1rem; }
+        .bpm-input { color: #ffca28 !important; border-color: #555 !important; }
+
+        /* 개별 버튼 스타일 */
+        button { width: 100%; padding: 18px; margin-top: 10px; border-radius: 15px; border: none; font-weight: 800; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .btn-main { background: linear-gradient(45deg, #00ff88, #00d9ff); color: #000; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+        .btn-pause { background: #ffca28; color: #000; }
+        .btn-stop { background: var(--neon-r); color: #fff; } /* 타이머 종료 빨간색 */
+        .btn-pip { background: #3498db; color: #fff; } /* PIP 파란색 */
+        .btn-reset { background: #333; color: #aaa; font-size: 0.9rem; padding: 12px; margin-top: 15px; } /* 초기화 무채색 */
+        
+        button:active { transform: scale(0.98); opacity: 0.8; }
+        
+        #ad-box { margin-top: 25px; color: #444; font-size: 0.8rem; border-top: 1px dashed #333; padding-top: 10px; }
+        canvas, video { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="box neon-border">
+    <div id="status">단계를 체크하여 활성화하세요</div>
+    <div id="t">00:00</div>
+    <div id="round">세트: 1 / 10</div>
+</div>
+
+<div class="box">
+    <div style="margin-bottom:15px; font-size:1rem; font-weight:bold;">
+        총 반복 횟수: <input type="number" id="total-sets" value="10" onchange="saveData()" style="width:60px;"> 회
+    </div>
+    <div id="inputs-container"></div>
+</div>
+
+<button id="btn-control" class="btn-main" onclick="handleControl()">타이머 시작</button>
+<button class="btn-stop" onclick="stopTimerOnly()">타이머 종료 (0으로)</button>
+<button class="btn-pip" onclick="togglePIP()">다른 앱 위에 띄우기</button>
+<button class="btn-reset" onclick="resetSettings()">설정 초기화</button>
+
+<div id="ad-box">광고 공간 (ADVERTISEMENT)</div>
+
+<canvas id="c" width="400" height="300"></canvas>
+<video id="v" autoplay muted playsinline></video>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let timerId = null, metroId = null;
+    let currentPhase = 0, currentSet = 1, timeLeft = 0, isRunning = false, isPaused = false;
+    let phases = [];
+
+    const defaultData = [
+        {m:3, s:0, bpm:60, use:true}, {m:1, s:0, bpm:0, use:true},
+        {m:2, s:0, bpm:120, use:false}, {m:0, s:30, bpm:0, use:false}, {m:0, s:30, bpm:0, use:false}
+    ];
+
+    function loadInputs() {
+        let saved = JSON.parse(localStorage.getItem('timerData')) || defaultData;
+        document.getElementById('total-sets').value = localStorage.getItem('totalSets') || 10;
+        let html = '';
+        saved.forEach((item, i) => {
+            html += `<div id="row-${i}" class="input-group ${item.use ? 'active-row' : 'inactive-row'}">
+                <span style="font-weight:bold; color:var(--neon-b)">${i+1}</span>
+                <input type="number" id="m${i}" value="${item.m}" onchange="saveData()"> 분 
+                <input type="number" id="s${i}" value="${item.s}" onchange="saveData()"> 초
+                <span style="font-size:0.8rem; color:#888;">박자</span>
+                <input type="number" id="bpm${i}" class="bpm-input" value="${item.bpm}" onchange="saveData()">
+                <input type="checkbox" id="use${i}" ${item.use ? 'checked' : ''} onchange="toggleRow(${i})">
+            </div>`;
+        });
+        document.getElementById('inputs-container').innerHTML = html;
+        updateUI(0);
+    }
+
+    function toggleRow(i) { document.getElementById(`row-${i}`).className = `input-group ${document.getElementById(`use${i}`).checked ? 'active-row' : 'inactive-row'}`; saveData(); }
+    
+    function saveData() {
+        const data = [];
+        for(let i=0; i<5; i++) { data.push({ m: document.getElementById('m'+i).value, s: document.getElementById('s'+i).value, bpm: document.getElementById('bpm'+i).value, use: document.getElementById('use'+i).checked }); }
+        localStorage.setItem('timerData', JSON.stringify(data));
+        localStorage.setItem('totalSets', document.getElementById('total-sets').value);
+    }
+
+    function beep(f, d, vol=0.2) {
+        try {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.frequency.value = f; g.gain.value = vol;
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + d);
+        } catch(e) {}
+    }
+
+    function handleControl() {
+        if (!isRunning) { initTimer(); } 
+        else if (!isPaused) { pauseTimer(); } 
+        else { resumeTimer(); }
+    }
+
+    function initTimer() {
+        saveData(); phases = [];
+        for(let i=0; i<5; i++) { 
+            if(document.getElementById('use'+i).checked) {
+                let sec = parseInt(document.getElementById('m'+i).value)*60 + parseInt(document.getElementById('s'+i).value);
+                if(sec > 0) phases.push({name: (i+1)+"단계", time: sec, bpm: parseInt(document.getElementById('bpm'+i).value)});
+            }
+        }
+        if(phases.length === 0) return alert("활성화된 단계가 없습니다.");
+        isRunning = true; isPaused = false; currentPhase = 0; currentSet = 1; timeLeft = phases[0].time;
+        updateBtn("일시중지", "btn-pause");
+        startInterval(parseInt(document.getElementById('total-sets').value));
+    }
+
+    function pauseTimer() { isPaused = true; clearInterval(timerId); clearInterval(metroId); updateBtn("다시 시작", "btn-main"); document.getElementById('status').innerText = "일시 정지됨"; }
+    function resumeTimer() { isPaused = false; updateBtn("일시중지", "btn-pause"); startInterval(parseInt(document.getElementById('total-sets').value)); }
+    
+    // 타이머만 종료하고 0으로 만듦
+    function stopTimerOnly() { 
+        clearInterval(timerId); clearInterval(metroId); 
+        isRunning = false; isPaused = false; timeLeft = 0; 
+        updateBtn("타이머 시작", "btn-main"); 
+        document.getElementById('status').innerText = "단계를 체크하여 활성화하세요"; 
+        updateUI(0);
+    }
+
+    // 설정 자체를 아예 초기화
+    function resetSettings() {
+        if(confirm("모든 입력값과 세트 설정을 초기화할까요?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+    
+    function updateBtn(t, c) { const b = document.getElementById('btn-control'); b.innerText = t; b.className = c; }
+
+    function startInterval(total) {
+        if(phases[currentPhase].bpm > 0) startMetronome();
+        timerId = setInterval(() => {
+            // 5초 전 비프음
+            if (timeLeft <= 5 && timeLeft > 0) { beep(880, 0.1, 0.3); } 
+            
+            timeLeft--;
+            if(timeLeft < 0) {
+                beep(1200, 0.4, 0.4); 
+                currentPhase++;
+                if(currentPhase >= phases.length) { currentPhase = 0; currentSet++; }
+                if(currentSet > total) { stopTimerOnly(); alert("운동 완료!"); return; }
+                timeLeft = phases[currentPhase].time;
+                clearInterval(metroId); startMetronome();
+            }
+            updateUI(total);
+        }, 1000);
+    }
+
+    function startMetronome() {
+        if(metroId) clearInterval(metroId);
+        let bpm = phases[currentPhase].bpm;
+        if(bpm > 0) metroId = setInterval(() => beep(440, 0.02, 0.1), 60000 / bpm);
+    }
+
+    function updateUI(total) {
+        let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+        const timeStr = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        document.getElementById('t').innerText = timeStr;
+        if(isRunning && !isPaused) document.getElementById('status').innerText = phases[currentPhase].name + " 진행 중";
+        document.getElementById('round').innerText = `세트: ${currentSet} / ${total || 10}`;
+        
+        const ctx = document.getElementById('c').getContext('2d');
+        ctx.fillStyle = "#050505"; ctx.fillRect(0,0,400,300);
+        ctx.shadowBlur = 15; ctx.shadowColor = "#00ff88";
+        ctx.fillStyle = "#00ff88"; ctx.font = "bold 100px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(timeStr, 200, 160);
+        ctx.shadowBlur = 5; ctx.font = "35px sans-serif";
+        ctx.fillText(isRunning ? phases[currentPhase].name : "준비", 200, 230);
+    }
+
+    async function togglePIP() {
+        const v = document.getElementById('v'), c = document.getElementById('c');
+        try {
+            v.srcObject = c.captureStream(30);
+            await v.play();
+            await v.requestPictureInPicture();
+        } catch (e) { alert("PIP를 실행할 수 없습니다. 브라우저 설정을 확인하세요."); }
+    }
+
+    loadInputs();
+</script>
+</body>
+</html>
