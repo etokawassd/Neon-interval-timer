@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON INTERVAL TIMER</title>
+    <title>NEON INTERVAL TIMER (FINAL AD READY)</title>
     <style>
         :root {
             --neon-green: #39FF14;
@@ -11,223 +11,227 @@
             --neon-red: #FF3131;
             --bg-dark: #121212;
             --card-bg: #1e1e1e;
+            --ad-height: 60px;
         }
         body {
             background-color: var(--bg-dark); color: white;
             font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            padding: 20px; margin: 0;
+            padding: 20px 20px calc(20px + var(--ad-height)) 20px;
+            margin: 0; min-height: 100vh; box-sizing: border-box;
         }
+        
         .display-card {
             background: var(--card-bg); border: 2px solid var(--neon-blue);
             border-radius: 20px; width: 100%; max-width: 400px;
-            padding: 25px 15px; text-align: center;
-            box-shadow: 0 0 15px var(--neon-blue); margin-bottom: 20px;
+            padding: 20px 15px; text-align: center;
+            box-shadow: 0 0 15px var(--neon-blue); margin-bottom: 15px;
         }
-        .status-text { color: var(--neon-blue); font-size: 0.85rem; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
-        .main-time { font-size: 5.5rem; font-weight: bold; color: var(--neon-green); text-shadow: 0 0 20px var(--neon-green); margin: 5px 0; font-variant-numeric: tabular-nums; }
-        .round-info { font-size: 1.1rem; opacity: 0.9; text-transform: uppercase; }
-
-        .settings-container { width: 100%; max-width: 400px; background: var(--card-bg); border-radius: 20px; padding: 15px; box-sizing: border-box; }
-        .step-row { display: flex; align-items: center; gap: 8px; background: #2a2a2a; margin-bottom: 8px; padding: 10px; border-radius: 12px; }
-        input[type="number"] { background: #121212; border: 1px solid #444; color: var(--neon-green); border-radius: 5px; padding: 5px; width: 45px; text-align: center; font-weight: bold; }
-        .unit-label { font-size: 0.7rem; color: #888; font-weight: bold; }
-
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 400px; margin-top: 20px; }
-        button { border: none; border-radius: 15px; padding: 15px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
-        button small { font-size: 10px; margin-top: 4px; font-weight: normal; }
+        .main-time { font-size: 5rem; font-weight: bold; color: var(--neon-green); text-shadow: 0 0 20px var(--neon-green); margin: 5px 0; }
         
-        .btn-main { grid-column: span 2; font-size: 2.2rem; box-shadow: 0 0 10px var(--neon-green); }
-        .state-start { background: var(--neon-green); color: black; }
-        .state-pause { background: #FFD700; color: black; box-shadow: 0 0 10px #FFD700; }
-        
-        .btn-stop { background: var(--neon-red); color: white; font-size: 1.6rem; }
-        .btn-overlay { background: var(--neon-blue); color: black; font-size: 1.6rem; }
-        .btn-reset { background: #444; color: white; grid-column: span 2; font-size: 1.1rem; }
+        .settings-container { width: 100%; max-width: 400px; background: var(--card-bg); border-radius: 20px; padding: 12px; box-sizing: border-box; }
+        .step-row { display: flex; align-items: center; gap: 8px; background: #2a2a2a; margin-bottom: 6px; padding: 8px; border-radius: 12px; }
+        input[type="number"] { background: #121212; border: 1px solid #444; color: var(--neon-green); border-radius: 5px; padding: 5px; width: 42px; text-align: center; font-weight: bold; }
 
-        button:active { transform: scale(0.96); }
-        input[type="checkbox"] { transform: scale(1.3); accent-color: var(--neon-blue); }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 400px; margin-top: 15px; }
+        .btn-start { grid-column: span 2; background: var(--neon-green); color: black; padding: 20px; border-radius: 20px; font-weight: bold; border: none; box-shadow: 0 0 15px var(--neon-green); display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .btn-stop { grid-column: span 2; background: var(--neon-red); color: white; padding: 15px; border-radius: 20px; font-weight: bold; border: none; box-shadow: 0 0 10px var(--neon-red); display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .btn-reset-ui { grid-column: span 2; background: #333; color: #ccc; padding: 12px; border-radius: 15px; font-size: 0.8rem; border: none; margin-top: 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+
+        .ad-placeholder { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--ad-height); background: rgba(0,0,0,0.8); border-top: 1px solid #333; display: flex; align-items: center; justify-content: center; color: #555; font-size: 0.8rem; z-index: 999; }
+
+        #reportModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1001; flex-direction: column; align-items: center; justify-content: center; }
+        .report-box { background: #222; border: 3px solid var(--neon-green); padding: 25px; border-radius: 25px; width: 85%; max-width: 320px; }
+        .report-val { color: var(--neon-green); font-weight: bold; font-size: 1.4rem; }
+        .ad-guide-btn { background: var(--neon-blue); color: black; padding: 18px; border-radius: 18px; font-size: 1.3rem; width: 100%; border: none; font-weight: bold; margin-top: 15px; }
+        /* 안내 문구 스타일 */
+        .ad-skip-hint { font-size: 0.75rem; color: #aaa; margin-top: 12px; line-height: 1.4; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="display-card">
-        <div class="status-text" id="statusLabel">STEP 1 ACTIVE</div>
+        <div id="statusLabel" style="color:var(--neon-blue); font-size:0.9rem;">READY?</div>
         <div class="main-time" id="timerDisplay">00:00</div>
-        <div class="round-info">ROUND: <span id="currentRoundDisplay">1</span> / <span id="totalRoundsDisplay">10</span></div>
+        <div style="font-size:0.9rem;">ROUND: <span id="currentRoundDisplay">1</span> / <span id="totalRoundsDisplay">10</span></div>
     </div>
 
     <div class="settings-container">
-        <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; margin-bottom:10px;">
-            <span style="font-size:0.9rem; font-weight:bold;">TOTAL ROUNDS</span>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;">
+            <span>TOTAL ROUNDS</span>
             <input type="number" id="totalRoundsInput" value="10" onchange="updateRounds()">
         </div>
         <div id="stepsContainer"></div>
     </div>
 
     <div class="btn-grid">
-        <button id="mainBtn" class="btn-main state-start" onclick="handleMainBtn()">
-            <span id="mainIcon">▶</span> <small id="mainText">(START)</small>
+        <button id="mainBtn" class="btn-start" onclick="handleMainBtn()">
+            <span id="mainIcon" style="font-size: 2rem;">▶</span>
+            <span id="mainText" style="font-size: 0.7rem;">(START)</span>
         </button>
-        <button class="btn-stop" onclick="stopTimer()">■ <small>(STOP)</small></button>
-        <button class="btn-overlay" onclick="toggleOverlay()">❐ <small>(OVERLAY)</small></button>
-        <button class="btn-reset" onclick="resetApp()">↺ <small>(RESET SETTINGS)</small></button>
+        <button class="btn-stop" onclick="stopAndResetTimer()">
+            <span style="font-size: 1.5rem;">■</span>
+            <span style="font-size: 0.7rem;">(STOP)</span>
+        </button>
+        <button class="btn-reset-ui" onclick="fullReset()">
+            <span style="font-size: 1rem;">↺</span>
+            <span>(RESET ALL SETTINGS)</span>
+        </button>
+    </div>
+
+    <div class="ad-placeholder">AD BANNER AREA</div>
+
+    <div id="reportModal">
+        <div id="preReport" style="text-align:center; padding: 20px; width: 100%; max-width: 320px;">
+            <h1 style="color:var(--neon-green); font-size:2.2rem; margin-bottom: 10px;">YOU DID IT! 🏆</h1>
+            <p style="margin-bottom: 20px;">오늘의 운동 리포트가 준비되었습니다.</p>
+            
+            <button class="ad-guide-btn" onclick="showFinalReport()">VIEW REPORT</button>
+            
+            <p class="ad-skip-hint">
+                ※ 리포트 확인 전 짧은 광고가 표시됩니다.<br>
+                광고 시작 후 상단의 'X'를 누르면 바로 스킵 가능합니다.
+            </p>
+        </div>
+
+        <div id="finalReport" style="display:none;" class="report-box">
+            <h2 style="color:var(--neon-green); text-align:center; margin-top: 0;">WORKOUT REPORT</h2>
+            <div style="margin:12px 0;">TIME: <span id="resTime" class="report-val">00:00</span></div>
+            <div style="margin:12px 0;">ROUNDS: <span id="resRound" class="report-val">0/0</span></div>
+            <div style="margin:12px 0;">STEPS: <span id="resSteps" class="report-val">0</span></div>
+            <button onclick="closeModal()" style="width:100%; margin-top:20px; background:var(--neon-green); padding:12px; border:none; border-radius:12px; font-weight:bold; color: black;">CLOSE</button>
+        </div>
     </div>
 
     <script>
-        let timerInterval;
-        let bpmInterval;
-        let isRunning = false;
-        let isPaused = false;
-        let currentStep = 1;
-        let currentRound = 1;
-        let timeLeft = 0;
-        
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let timerInterval, bpmInterval;
+        let isRunning = false, isPaused = false;
+        let currentStep = 1, currentRound = 1, timeLeft = 0;
+        let totalSec = 0, totalSteps = 0;
 
-        function playSound(freq, duration, volume = 0.1) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(f, d, v) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            o.start(); o.stop(audioCtx.currentTime + d);
+        }
+
+        function speakEncouragement() {
+            const msg = new SpeechSynthesisUtterance("You did it! Great job today! You are amazing.");
+            msg.lang = 'en-US'; msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
         }
 
         const container = document.getElementById('stepsContainer');
         for(let i=1; i<=5; i++) {
-            container.innerHTML += `
-                <div class="step-row">
-                    <input type="checkbox" id="check${i}" ${i<=2?'checked':''}>
-                    <span style="width:45px; font-size:0.75rem;">STEP ${i}</span>
-                    <input type="number" id="min${i}" value="${i==1?0:0}"> <span class="unit-label">MIN</span>
-                    <input type="number" id="sec${i}" value="${i==1?10:5}"> <span class="unit-label">SEC</span>
-                    <input type="number" id="bpm${i}" value="${i==1?60:120}" style="width:55px;"> <span class="unit-label">BPM</span>
-                </div>`;
+            container.innerHTML += `<div class="step-row">
+                <input type="checkbox" id="check${i}" ${i<=2?'checked':''}>
+                <span style="font-size:0.7rem; width:45px;">STEP ${i}</span>
+                <input type="number" id="min${i}" value="0"> <span style="font-size:0.6rem;">M</span>
+                <input type="number" id="sec${i}" value="${i==1?10:5}"> <span style="font-size:0.6rem;">S</span>
+                <input type="number" id="bpm${i}" value="${i==1?60:120}"> <span style="font-size:0.5rem;">BPM</span>
+            </div>`;
         }
 
-        function updateRounds() {
-            document.getElementById('totalRoundsDisplay').innerText = document.getElementById('totalRoundsInput').value;
-        }
-
-        function handleMainBtn() {
-            if (!isRunning || isPaused) startTimer();
-            else pauseTimer();
-        }
+        function updateRounds() { document.getElementById('totalRoundsDisplay').innerText = document.getElementById('totalRoundsInput').value; }
+        function handleMainBtn() { if(!isRunning || isPaused) startTimer(); else pauseTimer(); }
 
         function startTimer() {
+            if(audioCtx.state==='suspended') audioCtx.resume();
             isRunning = true; isPaused = false;
-            updateMainButtonUI();
-
-            if (timeLeft <= 0) loadStepTime();
-
-            // 타이머 로직 (1초마다 실행)
+            document.getElementById('mainIcon').innerText = "❚❚";
+            document.getElementById('mainText').innerText = "(PAUSE)";
+            document.getElementById('mainBtn').style.background = "#FFD700";
+            if(timeLeft <= 0) loadStep();
             timerInterval = setInterval(() => {
-                if (timeLeft <= 0) {
-                    nextStep();
-                } else {
-                    timeLeft--;
-                    // 시작 3초 전 비프음 (3, 2, 1초 남았을 때)
-                    if (timeLeft < 3 && timeLeft >= 0) {
-                        playSound(1200, 0.1, 0.2); 
-                    }
+                if(timeLeft <= 0) nextStep();
+                else {
+                    timeLeft--; totalSec++;
+                    if(timeLeft < 3) playSound(1200, 0.1, 0.2);
                     updateDisplay();
                 }
             }, 1000);
+            startBpm();
+        }
 
-            startBpm(); // BPM 소리 시작
+        function stopAndResetTimer() {
+            clearInterval(timerInterval); clearInterval(bpmInterval);
+            isRunning = false; isPaused = false;
+            currentStep = 1; currentRound = 1; timeLeft = 0; totalSec = 0; totalSteps = 0;
+            document.getElementById('timerDisplay').innerText = "00:00";
+            document.getElementById('currentRoundDisplay').innerText = "1";
+            document.getElementById('statusLabel').innerText = "READY?";
+            document.getElementById('mainIcon').innerText = "▶";
+            document.getElementById('mainText').innerText = "(START)";
+            document.getElementById('mainBtn').style.background = "var(--neon-green)";
+        }
+
+        function fullReset() { if(confirm("모든 설정값을 초기값으로 리셋할까요?")) location.reload(); }
+
+        function loadStep() {
+            const m = parseInt(document.getElementById(`min${currentStep}`).value)||0;
+            const s = parseInt(document.getElementById(`sec${currentStep}`).value)||0;
+            timeLeft = m*60 + s; totalSteps++;
+            document.getElementById('statusLabel').innerText = `STEP ${currentStep} RUNNING`;
+            updateDisplay();
         }
 
         function startBpm() {
             clearInterval(bpmInterval);
-            const bpmValue = parseInt(document.getElementById(`bpm${currentStep}`).value) || 0;
-            if (bpmValue > 0) {
-                const interval = 60000 / bpmValue;
-                bpmInterval = setInterval(() => {
-                    playSound(440, 0.03, 0.05); // 박자 소리
-                }, interval);
-            }
-        }
-
-        function loadStepTime() {
-            const m = parseInt(document.getElementById(`min${currentStep}`).value) || 0;
-            const s = parseInt(document.getElementById(`sec${currentStep}`).value) || 0;
-            timeLeft = m * 60 + s;
-            document.getElementById('statusLabel').innerText = `STEP ${currentStep} ACTIVE`;
-            updateDisplay();
+            const bpm = parseInt(document.getElementById(`bpm${currentStep}`).value)||0;
+            if(bpm>0) bpmInterval = setInterval(()=>playSound(440, 0.03, 0.05), 60000/bpm);
         }
 
         function nextStep() {
-            clearInterval(timerInterval);
-            clearInterval(bpmInterval);
-            
+            clearInterval(timerInterval); clearInterval(bpmInterval);
             currentStep++;
-            // 다음 활성화된 스텝 찾기
-            if (currentStep > 5 || !document.getElementById(`check${currentStep}`).checked) {
-                currentStep = 1;
-                currentRound++;
-                if (currentRound > parseInt(document.getElementById('totalRoundsInput').value)) {
-                    stopTimer(); 
-                    playSound(1500, 0.5, 0.2);
-                    alert("GREAT WORKOUT!"); 
-                    return;
-                }
+            if(currentStep > 5 || !document.getElementById(`check${currentStep}`).checked) {
+                currentStep = 1; currentRound++;
+                if(currentRound > parseInt(document.getElementById('totalRoundsInput').value)) return finish();
                 document.getElementById('currentRoundDisplay').innerText = currentRound;
             }
-            
-            loadStepTime();
-            startTimer(); // 즉시 다음 스텝 시작 (딜레이 제거)
+            loadStep(); startTimer();
+        }
+
+        function finish() {
+            clearInterval(timerInterval); clearInterval(bpmInterval);
+            playSound(523, 0.2, 0.1); 
+            setTimeout(()=>playSound(659, 0.2, 0.1), 150); 
+            setTimeout(()=>playSound(783, 0.4, 0.1), 300);
+            setTimeout(speakEncouragement, 800);
+            document.getElementById('reportModal').style.display = 'flex';
+            document.getElementById('resTime').innerText = `${Math.floor(totalSec/60)}m ${totalSec%60}s`;
+            document.getElementById('resRound').innerText = `${currentRound-1} / ${document.getElementById('totalRoundsInput').value}`;
+            document.getElementById('resSteps').innerText = totalSteps;
+        }
+
+        function showFinalReport() {
+            document.getElementById('preReport').style.display = 'none';
+            document.getElementById('finalReport').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            document.getElementById('finalReport').style.display = 'none';
+            document.getElementById('preReport').style.display = 'block';
+            stopAndResetTimer();
         }
 
         function pauseTimer() {
-            clearInterval(timerInterval);
-            clearInterval(bpmInterval);
-            isRunning = false; isPaused = true;
-            updateMainButtonUI();
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-            clearInterval(bpmInterval);
-            isRunning = false; isPaused = false;
-            currentStep = 1; currentRound = 1; timeLeft = 0;
-            updateDisplay();
-            document.getElementById('currentRoundDisplay').innerText = "1";
-            document.getElementById('statusLabel').innerText = "Check to activate steps";
-            updateMainButtonUI();
-        }
-
-        function updateMainButtonUI() {
-            const btn = document.getElementById('mainBtn');
-            const icon = document.getElementById('mainIcon');
-            const text = document.getElementById('mainText');
-            
-            if (isRunning && !isPaused) {
-                btn.className = "btn-main state-pause";
-                icon.innerText = "❚❚";
-                text.innerText = "(PAUSE)";
-            } else {
-                btn.className = "btn-main state-start";
-                icon.innerText = "▶";
-                text.innerText = isPaused ? "(RESUME)" : "(START)";
-            }
+            clearInterval(timerInterval); clearInterval(bpmInterval);
+            isPaused = true;
+            document.getElementById('mainIcon').innerText = "▶";
+            document.getElementById('mainText').innerText = "(RESUME)";
+            document.getElementById('mainBtn').style.background = "var(--neon-green)";
         }
 
         function updateDisplay() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const s = (timeLeft % 60).toString().padStart(2, '0');
+            const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+            const s = (timeLeft%60).toString().padStart(2,'0');
             document.getElementById('timerDisplay').innerText = `${m}:${s}`;
-        }
-
-        function toggleOverlay() {
-            alert("Overlay mode activated.");
-        }
-
-        function resetApp() {
-            if(confirm("Reset all settings?")) location.reload();
         }
         updateRounds();
     </script>
